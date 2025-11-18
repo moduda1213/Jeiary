@@ -1,0 +1,32 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiosqlite>=0.21.0",
+    "alembic==1.13.1",
+    "asyncpg==0.29.0",
+    "bcrypt==3.2.2",
+    "email-validator==2.1.1",
+    "fastapi==0.109.0",
+    "httpx==0.26.0",
+    "loguru==0.7.2",
+    "passlib[bcrypt]==1.7.4",
+    "psycopg2-binary==2.9.9",
+    "pydantic==2.5.3",
+    "pydantic-settings==2.1.0",
+    "pytest==7.4.4",
+    "pytest-asyncio==0.23.3",
+    "pytest-cov==4.1.0",
+    "pytest-mock>=3.15.1",
+    "python-dateutil==2.8.2",
+    "python-dotenv==1.0.0",
+    "python-jose[cryptography]==3.3.0",
+    "python-multipart==0.0.20",
+    "slowapi>=0.1.9",
+    "sqlalchemy==2.0.25",
+    "tiktoken>=0.12.0",
+    "uvicorn[standard]==0.27.0",
+]

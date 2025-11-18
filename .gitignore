@@ -1,0 +1,72 @@
+# Environments
+.env
+.venv
+venv/
+env/
+__pycache__/
+htmlcov/
+
+# Logs
+logs/
+*.log
+
+# IDE / Editor
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Database
+*.sqlite3
+*.db
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+dist/
+build/
+*.egg-info/
+*.egg
+
+Docker 데이터베이스 연결
+gemini.md
+log.txt
+memo.txt
+feedback.md
+workflow/
+docs/
+면접/
+
+
+#############################
+####### frontend ############
+#############################
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
