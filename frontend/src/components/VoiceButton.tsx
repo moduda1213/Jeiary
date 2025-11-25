@@ -4,50 +4,60 @@ import { motion } from "motion/react";
 
 interface VoiceButtonProps {
   onVoiceInput: (userMessage: string, aiResponse: string) => void;
+  disabled?: boolean;
 }
 
-export function VoiceButton({ onVoiceInput }: VoiceButtonProps) {
+export function VoiceButton({ onVoiceInput, disabled }: VoiceButtonProps) {
   const [isActive, setIsActive] = useState(false);
 
   const handleClick = () => {
-    if (!isActive) {
-      setIsActive(true);
-      
-      // 음성 인식 시뮬레이션 (실제 구현 시 음성 API 연동)
-      setTimeout(() => {
-        const mockUserMessages = [
-          "내일 오후 3시에 회의 일정 추가해줘",
-          "다음 주 월요일 일정 알려줘",
-          "오늘 일정 취소해줘",
-          "이번 주 금요일에 점심 약속 추가",
-        ];
-        
-        const mockAIResponses = [
-          "정상적으로 일정을 추가했습니다.",
-          "다음 주 월요일에 2개의 일정이 있습니다.",
-          "오류가 발생해 진행하지 못했습니다. 다시 시도해주세요.",
-          "금요일 12시에 점심 약속을 추가했습니다.",
-        ];
-        
-        const randomIndex = Math.floor(Math.random() * mockUserMessages.length);
-        const userMessage = mockUserMessages[randomIndex];
-        const aiResponse = mockAIResponses[randomIndex];
-        
-        onVoiceInput(userMessage, aiResponse);
-        setIsActive(false);
-      }, 2000);
+    
+    if (disabled || isActive) {
+      return;
     }
+
+    setIsActive(true);
+    
+    // 음성 인식 시뮬레이션 (실제 구현 시 음성 API 연동)
+    setTimeout(() => {
+      const mockUserMessages = [
+        "내일 오후 3시에 회의 일정 추가해줘",
+        "다음 주 월요일 일정 알려줘",
+        "오늘 일정 취소해줘",
+        "이번 주 금요일에 점심 약속 추가",
+      ];
+      
+      const mockAIResponses = [
+        "정상적으로 일정을 추가했습니다.",
+        "다음 주 월요일에 2개의 일정이 있습니다.",
+        "오류가 발생해 진행하지 못했습니다. 다시 시도해주세요.",
+        "금요일 12시에 점심 약속을 추가했습니다.",
+      ];
+      
+      const randomIndex = Math.floor(Math.random() * mockUserMessages.length);
+      const userMessage = mockUserMessages[randomIndex];
+      const aiResponse = mockAIResponses[randomIndex];
+      
+      onVoiceInput(userMessage, aiResponse);
+      setIsActive(false);
+    }, 2000);
+    
   };
 
   return (
     <div className="relative">
       <motion.button
         onClick={handleClick}
-        className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-          isActive ? "bg-red-500" : "bg-blue-600"
-        } text-white shadow-md hover:shadow-lg`}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        disabled={disabled}
+        className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-colors text-white shadow-md ${
+           isActive
+             ? "bg-red-500"
+             : disabled
+             ? "bg-gray-400 cursor-not-allowed" // 비활성화 시 스타일
+             : "bg-blue-600 hover:shadow-lg" // 활성화 가능 시 스타일
+         }`}
+        whileHover={!disabled ? { scale: 1.05 } : {}}
+        whileTap={!disabled ? { scale: 0.95 } : {}}
       >
         {isActive && (
           <>

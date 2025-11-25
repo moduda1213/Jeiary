@@ -5,6 +5,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { VoiceButton } from "./VoiceButton";
+import { WindAndLeavesLoading } from "./WindAndLeavesLoading";
 
 export interface ConversationMessage {
   id: string;
@@ -17,9 +18,10 @@ interface VoiceAssistantPanelProps {
   conversations: ConversationMessage[];
   onSendMessage?: (message: string) => void;
   onVoiceInput?: (userMessage: string, aiResponse: string) => void;
+  isParsing?: boolean
 }
 
-export function VoiceAssistantPanel({ conversations, onSendMessage, onVoiceInput }: VoiceAssistantPanelProps) {
+export function VoiceAssistantPanel({ conversations, onSendMessage, onVoiceInput, isParsing }: VoiceAssistantPanelProps) {
   const [inputMessage, setInputMessage] = useState("");
 
   const handleSend = () => {
@@ -98,20 +100,28 @@ export function VoiceAssistantPanel({ conversations, onSendMessage, onVoiceInput
       </ScrollArea>
 
       <div className="border-t p-4">
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="메시지를 입력하세요..."
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="flex-1"
-          />
-          <Button onClick={handleSend} size="icon">
-            <Send className="w-4 h-4" />
-          </Button>
-          {onVoiceInput && <VoiceButton onVoiceInput={onVoiceInput} />}
-        </div>
+        {isParsing ? (
+          <div className="flex flex-col items-center justify-center gap-2 text-sm text-gray-500">
+            <WindAndLeavesLoading />
+            <span>AI가 응답을 생성중입니다...</span>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="메시지를 입력하세요..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyUp={handleKeyPress}
+              className="flex-1"
+              disabled={isParsing}
+            />
+            <Button onClick={handleSend} size="icon" disabled={isParsing}>
+              <Send className="w-4 h-4" />
+            </Button>
+            {onVoiceInput && <VoiceButton onVoiceInput={onVoiceInput} disabled={isParsing} />}
+          </div>
+        )}
       </div>
     </div>
   );

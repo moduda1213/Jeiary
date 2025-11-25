@@ -11,6 +11,7 @@ from app.repositories.schedule_repo import ScheduleRepository
 from app.repositories.refresh_token_repo import RefreshTokenRepository
 from app.services.auth_service import AuthService
 from app.services.schedule_service import ScheduleService
+from app.services.ai_service import AIService
 
 from app.core.exceptions import CredentialException, ExpiredTokenException, InvalidTokenException
 from app.core.security import oauth2_scheme, verify_token
@@ -50,8 +51,6 @@ def get_schedule_service(
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 ScheuduleServiceDep = Annotated[ScheduleService, Depends(get_schedule_service)]
 
-
-
 async def get_current_user(
     request: Request,
     user_repo: UserRepoDep,
@@ -79,3 +78,10 @@ async def get_current_user(
     return user
 
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+# AI Service 의존성 주입 함수
+def get_ai_service() -> AIService:
+    """AIService 인스턴스를 제공합니다."""
+    return AIService()
+
+AIServiceDep = Annotated[AIService, Depends(get_ai_service)]

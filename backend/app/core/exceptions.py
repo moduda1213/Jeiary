@@ -32,5 +32,8 @@ class CredentialException(HTTPException):
             headers={"WWW-Authenticate": "Bearer"},
         )
         
-
+class AIConnectionError(Exception):
+    pass
         
+class AIParsingError(Exception):
+    pass

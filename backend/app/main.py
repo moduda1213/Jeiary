@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api.v1 import auth as auth_router
 from app.api.v1 import schedules as schedules_router
+from app.api.v1 import ai as ai_router
 from app.core.limiter import limiter, rate_limit_handler
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
@@ -47,6 +48,7 @@ if settings.CORS_ORIGINS:
 
 app.include_router(auth_router.router, prefix="/api/v1")
 app.include_router(schedules_router.router, prefix="/api/v1")
+app.include_router(ai_router.router, prefix="/api/v1")
 
 @app.get(
     "/health",

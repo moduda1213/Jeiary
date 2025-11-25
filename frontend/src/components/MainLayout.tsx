@@ -11,57 +11,15 @@ import { LoginPage } from "./LoginPage";
 import type { Event } from "./CalendarView";
 
 import { useAuth } from "../contexts/AuthContext";
-
-
-// Mock 데이터
-// const mockEvents: Event[] = [
-//   {
-//     id: 1,
-//     date: new Date(2025, 9, 12),
-//     title: "팀 회의",
-//     content: "분기별 목표 설정 및 프로젝트 진행 상황 공유",
-//     start_time: "10:00",
-//     end_time: "11:30",
-//   },
-//   {
-//     id: 2,
-//     date: new Date(2025, 9, 12),
-//     title: "점심 약속",
-//     content: "고객사 담당자와 점심 미팅",
-//     start_time: "12:30",
-//     end_time: "14:00",
-//   },
-//   {
-//     id: 3,
-//     date: new Date(2025, 9, 18),
-//     title: "프로젝트 발표",
-//     content: "신규 서비스 기획안 발표 및 피드백",
-//     start_time: "15:00",
-//     end_time: "17:00",
-//   },
-//   {
-//     id: 4,
-//     date: new Date(2025, 9, 20),
-//     title: "개발자 컨퍼런스",
-//     content: "최신 기술 트렌드 세미나 참석",
-//     start_time: "09:00",
-//     end_time: "18:00",
-//   },
-//   {
-//     id: 5,
-//     date: new Date(2025, 9, 25),
-//     title: "월간 보고",
-//     content: "월간 실적 보고 및 다음 달 계획 수립",
-//     start_time: "14:00",
-//     end_time: "15:30",
-//   },
-// ];
+import { parseTextWithAI } from "../api/ai";
 
 export function Mainlayout() {
   const {isLoggedIn, logout} = useAuth();
-
+  
   const { fetchSchedules, addSchedule, editSchedule } = useScheduleStore();
 
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [conversations, setConversations] = useState<ConversationMessage[]>([]);
@@ -170,10 +128,53 @@ export function Mainlayout() {
     ]);
   };
 
-  const handleSendMessage = (message: string) => {
-    // Mock AI 응답 생성
-    const aiResponse = "네, 알겠습니다. 일정을 확인하고 도와드리겠습니다.";
-    handleVoiceInput(message, aiResponse);
+  const handleSendMessage = async (message: string) => {
+    const userMessage: ConversationMessage = {
+      id: `user-${Date.now()}`,
+      type: 'user',
+      message: message,
+      timestamp: new Date(),
+    };
+    setConversations((prev) => [...prev, userMessage]);
+    setIsParsing(true);
+    setParseError(null);
+
+    try {
+      const response = await parseTextWithAI(message);
+      
+      if(response.is_complete && response.data) {
+        await addSchedule(response.data);
+
+        const successMessage: ConversationMessage = {
+          id: `assistant-${Date.now()}`,
+          type: 'assistant',
+          message: "일정을 성공적으로 추가했습니다.",
+          timestamp: new Date(),
+        };
+        setConversations((prev) => [...prev, successMessage]);
+        
+      } else {
+        const questionMessage: ConversationMessage = {
+          id: `assistant-${Date.now()}`,
+          type: 'assistant',
+          message: response.question || "죄송합니다. 요청을 이해하지 못했어요. 다시 말씀해주시겠어요?",
+          timestamp: new Date(),
+        };
+        setConversations((prev) => [...prev, questionMessage]);
+      }
+    } catch (error) {
+      console.error("AI 파싱 에러: ", error);
+      const errorMessage: ConversationMessage = {
+        id: `assistant-${Date.now()}`,
+        type: 'assistant',
+        message: "요청 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
+        timestamp: new Date(),
+      };
+      setConversations((prev) => [...prev, errorMessage]);
+      setParseError("요청 처리 중 오류가 발생했습니다.");
+    } finally {
+      setIsParsing(false);
+    }
   };
 
   // 로그인하지 않은 경우 로그인 페이지 표시
@@ -207,6 +208,7 @@ export function Mainlayout() {
           conversations={conversations} 
           onSendMessage={handleSendMessage}
           onVoiceInput={handleVoiceInput}
+          isParsing={isParsing}
         />
       </div>
 

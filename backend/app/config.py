@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     
     BCRYPT_ROUNDS: int
     
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL:str = "jeiary-scheduler"
+    
     @property
     def DATABASE_URL(self) -> str:
         """비동기 SQLAlchemy 드라이버를 위한 데이터베이스 URL 생성"""
@@ -26,7 +29,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=True
+        case_sensitive=True,
+        extra="ignore",
     )
 
 settings = Settings()
