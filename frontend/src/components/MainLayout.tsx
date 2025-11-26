@@ -19,7 +19,7 @@ export function Mainlayout() {
   const { fetchSchedules, addSchedule, editSchedule } = useScheduleStore();
 
   const [isParsing, setIsParsing] = useState(false);
-  const [parseError, setParseError] = useState<string | null>(null);
+  //const [parseError, setParseError] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [conversations, setConversations] = useState<ConversationMessage[]>([]);
@@ -137,7 +137,7 @@ export function Mainlayout() {
     };
     setConversations((prev) => [...prev, userMessage]);
     setIsParsing(true);
-    setParseError(null);
+    // setParseError(null);
 
     try {
       const response = await parseTextWithAI(message);
@@ -171,7 +171,7 @@ export function Mainlayout() {
         timestamp: new Date(),
       };
       setConversations((prev) => [...prev, errorMessage]);
-      setParseError("요청 처리 중 오류가 발생했습니다.");
+      //setParseError("요청 처리 중 오류가 발생했습니다.");
     } finally {
       setIsParsing(false);
     }

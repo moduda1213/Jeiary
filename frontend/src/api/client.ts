@@ -3,7 +3,7 @@ import axios, {AxiosError} from 'axios';
 // 백엔드 API의 기본 URL을 설정하여 axios 인스턴스를 생성합니다.
 // 이렇게 하면 모든 요청에서 도메인 부분을 반복해서 입력할 필요가 없습니다.
 const apiClient = axios.create({
-    baseURL: 'http://localhost:8000/api/v1', // 백엔드 주소
+    baseURL: '/api/v1', // 백엔드 주소
     withCredentials: true, // 서버에 HTTP-only 쿠키(Refresh Token) 자동 전송
 });
 
@@ -47,7 +47,7 @@ apiClient.interceptors.response.use(
         // 2. 토큰 갱신 로직이 이미 실행 중인 경우
         if (isRefreshing) {
             // 이 요청은 '대기열'에 추가하고, 토큰 갱신이 완료되면 재실행
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 failedQueue.push((token) => {
                     originalRequest.headers['Authorization'] = 'Bearer ' + token;
                     resolve(apiClient(originalRequest));
