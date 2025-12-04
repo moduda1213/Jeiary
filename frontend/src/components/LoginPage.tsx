@@ -54,6 +54,14 @@ export function LoginPage() {
       return;
     }
 
+    // 비밀번호 특수문자 검사
+    const numberRegex = /[0-9]/; 
+    console.log("ddd");
+    if (!numberRegex.test(password)) {
+      alert("비밀번호에는 숫자가 최소 1개 이상 포함되어야 합니다.");
+      return;
+    }
+    
     try {
       // await apiClient.post('/auth/login', {email, password});
       // login();
@@ -102,6 +110,13 @@ export function LoginPage() {
       return;
     }
     
+    // 비밀번호 특수문자 검사
+    const numberRegex = /[0-9]/;
+    if (!numberRegex.test(password)) {
+      alert("비밀번호에는 숫자가 최소 1개 이상 포함되어야 합니다.");
+      return;
+    }
+
     // 비밀번호 확인 검증
     if (password !== confirmPassword) {
       alert("비밀번호가 일치하지 않습니다.");
