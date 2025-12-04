@@ -3,6 +3,8 @@ from app.schemas.ai import AITextRequest, AIParsedSchedule, AIParseResponse
 from app.dependencies import CurrentUserDep, AIServiceDep
 from app.core.exceptions import AIConnectionError, AIParsingError
 
+from loguru import logger
+
 router = APIRouter(prefix="/ai", tags=["AI"])
 
 @router.post(
@@ -21,9 +23,10 @@ async def parse_text_with_ai(
     사용자 텍스트를 AI에게 전달하여 일정을 파싱하고 그 결과를 반환합니다.
     AI가 추가 정보가 필요할 경우 질문을 반환
     """
+    logger.info("========= /parse 진입 ===================")
     try:
         result = await ai_serivce.parse_schedule_from_text(request.text)
-        
+        logger.debug(f"Parsing data : {result}")
         if isinstance(result, AIParsedSchedule):
             return AIParseResponse(is_complete=True, data=result, question=None)
         else:

@@ -6,6 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import logo from "../assets/Jeiary_logo_ver2.png";
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -22,7 +23,7 @@ export function Header({ isLoggedIn, onLogout, onNavigateHome }: HeaderProps) {
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <ImageWithFallback 
-            src="./src/assets/Jeiary_logo_ver2.png" 
+            src={logo}
             alt="Jeiary Logo"
             className="h-8 w-auto"
           />
