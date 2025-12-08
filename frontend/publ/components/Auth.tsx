@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ViewState } from '../types';
+import { ViewState } from '@/types';
 
 interface AuthProps {
   currentView: ViewState;

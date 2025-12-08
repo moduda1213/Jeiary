@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, ViewState } from '../types';
+import { User, ViewState } from '@/types';
 
 interface SidebarProps {
   user: User;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { CalendarEvent } from '../types';
-import { EventModal } from '../components/EventModal';
+import { CalendarEvent } from '@/types';
+import { EventModal } from '@/components/EventModal';
 
 interface CalendarViewProps {
   events: CalendarEvent[];

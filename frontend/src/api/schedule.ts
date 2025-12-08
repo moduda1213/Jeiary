@@ -1,17 +1,5 @@
 import apiClient from "./client";
-
-// 전체 일정 정보 타입
-export interface Schedule {
-    id: number;
-    title: string;
-    date: string; // 'YYYY-MM-DD' 형식
-    start_time: string; // 'HH:MM' 형식
-    end_time: string; // 'HH:MM' 형식
-    content: string | null;
-    created_at: string;
-    updated_at: string;
-    user_id: number;
-}
+import { type Schedule } from "@/types";
 
 // 일정 생성을 위한 타입
 export interface ScheduleCreate {

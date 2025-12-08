@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarEvent } from '../types';
+import { CalendarEvent } from '@/types';
 
 interface EventModalProps {
   isOpen: boolean;

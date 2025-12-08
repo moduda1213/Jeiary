@@ -1,0 +1,5 @@
+{
+  "name": "AI Schedule Assistant",
+  "description": "A smart calendar and scheduling application powered by Gemini AI, featuring real-time chat assistance and intuitive calendar management.",
+  "requestFramePermissions": []
+}
