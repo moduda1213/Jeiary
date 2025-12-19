@@ -6,6 +6,9 @@ from tenacity import retry, stop_after_attempt, wait_fixed, RetryError
 
 from app.config import settings
 from app.schemas.ai import AIParsedSchedule
+from app.repositories.chat_repo import ChatRepository
+from app.models.chat import ChatRole
+from app.models.schedule import Schedule
 
 from app.core.exceptions import AIConnectionError, AIParsingError
 
@@ -59,12 +62,13 @@ SYSTEM_PROMPT = """
 """
 class AIService:
     
-    def __init__(self):
+    def __init__(self, chat_repo: ChatRepository = None):
         """
         AIService를 초기화하고 ollama 비동기 클라이언트를 설정합니다.
         설정 파일(config.py)에서 Ollama 서버의 URL을 가져옵니다.
         """
         self.client = ollama.AsyncClient(host=settings.OLLAMA_BASE_URL)
+        self.chat_repo = chat_repo
     
     @retry(
         stop=stop_after_attempt(3), # 최대 3번 재시도
@@ -159,3 +163,86 @@ class AIService:
         except Exception as e:
             # 그 외 모든 Ollama 관련 예외 처리
             raise AIConnectionError(f"예상치 못한 에러가 발생하였습니다. {e}")
+    
+    async def process_chat(self, user_id: int, message: str) -> str:
+        """
+        사용자의 채팅 메세지를 처리하고 응답을 생성합니다.
+        대화 내역을 DB에 저장합니다.
+        """
+        # 사용자 메세지 DB 저장
+        if self.chat_repo:
+            await self.chat_repo.create(user_id, ChatRole.USER, message)
+        
+        # 대화 문맥 조회    
+        context_messages = []
+        if self.chat_repo:
+            recent_chats = await self.chat_repo.get_recent_chats(user_id, limit=10)
+            for chat in reversed(recent_chats):
+                context_messages.append({"role": chat.role, "content": chat.content})
+        else:
+            # 현재 메세지 추가
+            context_messages.append({"role": "user", "content": message})
+        
+        # AI 요청
+        # TODO. 채팅 전용 프롬프트나 모델 분리 고려.
+        try:
+            response = await self._send_chat_request(
+                model = settings.OLLAMA_MODEL,
+                messages = context_messages
+            )
+            ai_content = response["message"]["content"]
+            
+            # ai응답 DB 저장
+            if self.chat_repo:
+                await self.chat_repo.create(user_id, ChatRole.ASSISTANT, ai_content)
+                
+            return ai_content
+        
+        except Exception as e:
+            logger.error(f"AI Chat Error: {e}")
+            raise AIConnectionError(f"대화 처리 중 오류가 발생했습니다: {e}")
+        
+    async def generate_briefing(self, schedules: list[Schedule]) -> str:
+        """
+        사용자의 일정 리스트를 바탕으로 AI 요약 브리핑을 생성합니다.
+        Args:
+            schedules: Schedule 객체 리스트
+        Returns:
+            str: 요약된 브리핑 텍스트
+        """
+        if not schedules:
+            return "오늘은 예정된 일정이 없습니다. 편안한 하루 보내세요."
+        
+        # 일정 데이터를 텍스트로 변환
+        schedule_texts = []
+        for s in schedules:
+            time_str = f"{s.start_time.strftime('%H:%M')} ~ {s.end_time.strftime('%H:%M')}"
+            schedule_texts.append(f"- {s.title} ({time_str})")
+            
+        schedule_context = "\n".join(schedule_texts)
+        
+        # 브리핑 전용 프롬프트 생성
+        prompt = f"""
+            당신은 상냥한 개인 비서입니다. 아래는 사용자의 오늘 일정입니다.
+            이 일정들을 바탕으로 사용자가 기분 좋게 하루를 시작할 수 있는 '모닝 브리핑' 메시지를 작성해주세요.
+            
+            [오늘 일정]
+            {schedule_context}
+            
+            [작성 규칙]
+            1. 시간 순서대로 요약해서 언급해주세요.
+            2. 말투는 정중하고 활기차게 해주세요.
+            3. 마지막에는 응원의 한마디를 덧붙여주세요.
+            4. 분량은 3~5문장 정도로 간결하게 작성하세요.
+        """
+        
+        try:
+            response = await self._send_chat_request(
+                model = settings.OLLAMA_MODEL,
+                messages = [{"role": "user", "content": prompt}]
+            )
+            return response["message"]["content"]
+        
+        except Exception as e:
+            logger.error(f"Failed to generate briefing: {e}")
+            return f"오늘 총 {len(schedules)}개의 일정이 있습니다.\n{schedule_context}"

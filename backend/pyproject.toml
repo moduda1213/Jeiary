@@ -7,10 +7,12 @@ requires-python = ">=3.11"
 dependencies = [
     "aiosqlite>=0.21.0",
     "alembic==1.13.1",
+    "apscheduler==3.11.1",
     "asyncpg==0.29.0",
     "bcrypt==3.2.2",
     "email-validator==2.1.1",
     "fastapi==0.109.0",
+    "freezegun==1.4.0",
     "httpx>=0.25.2,<0.26.0",
     "loguru==0.7.2",
     "ollama>=0.1.7",

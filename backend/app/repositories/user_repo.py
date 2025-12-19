@@ -13,6 +13,10 @@ class UserRepository(BaseRepository[User]):
         result = await self.session.execute(select(self.model).filter(self.model.email== email))
         return result.scalars().first()
     
+    async def get_all_users(self) -> list[User]:
+        result = await self.session.execute(select(self.model))
+        return list(result.scalars().all())
+    
     async def create(self, user_create: UserCreate) -> User:
         hashed_password = get_password_hash(user_create.password)
         user_data= user_create.model_dump(exclude={"password"})

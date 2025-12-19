@@ -7,7 +7,7 @@ from app.schemas.schedule import ScheduleCreate, ScheduleUpdate
 from app.models.schedule import Schedule
 from app.models.user import User
 
-class ScheduleService():
+class ScheduleService:
     def __init__(self, schedule_repo: ScheduleRepository):
         self.schedule_repo = schedule_repo
         

@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.user_repo import UserRepository
 from app.repositories.schedule_repo import ScheduleRepository
+from app.repositories.chat_repo import ChatRepository
 from app.repositories.refresh_token_repo import RefreshTokenRepository
+
 from app.services.auth_service import AuthService
 from app.services.schedule_service import ScheduleService
 from app.services.ai_service import AIService
@@ -32,9 +34,13 @@ def get_refresh_token_repo(db: DBSessionDep) -> RefreshTokenRepository:
 def get_schedule_repo(db: DBSessionDep) -> ScheduleRepository:
     return ScheduleRepository(session=db)
 
+def get_chat_repo(db: DBSessionDep) -> ChatRepository:
+    return ChatRepository(session=db)
+
 UserRepoDep = Annotated[UserRepository, Depends(get_user_repo)]
 RefreshTokenRepoDep = Annotated[RefreshTokenRepository, Depends(get_refresh_token_repo)]
 ScheduleRepoDep = Annotated[ScheduleRepository, Depends(get_schedule_repo)]
+ChatRepoDep = Annotated[ChatRepository, Depends(get_chat_repo)]
 
 # Service 의존성
 def get_auth_service(
@@ -80,8 +86,10 @@ async def get_current_user(
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 # AI Service 의존성 주입 함수
-def get_ai_service() -> AIService:
+def get_ai_service(
+    chat_repo: ChatRepoDep,
+) -> AIService:
     """AIService 인스턴스를 제공합니다."""
-    return AIService()
+    return AIService(chat_repo=chat_repo)
 
 AIServiceDep = Annotated[AIService, Depends(get_ai_service)]

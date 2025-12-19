@@ -16,12 +16,12 @@ import app.models
 from app.schemas.user import UserCreate
 from app.repositories.user_repo import UserRepository
 from app.models.user import User
-
-from httpx import AsyncClient
 from app.main import app
 from app.db.session import get_db
-
 from app.core.limiter import limiter
+
+from httpx import AsyncClient
+from unittest.mock import AsyncMock # 비동기 응답을 흉내
 
 # 테스트용 비동기 엔진 생성 (인메모리 SQLite)
 engine = create_async_engine(
@@ -114,3 +114,14 @@ async def authenticated_user_cookie(client: AsyncClient, test_user: User) -> dic
     assert access_token is not None, "로그인 응답에 access_token 쿠키가 없습니다."
     
     return {"access_token": access_token}
+
+@pytest.fixture
+def mock_ai_service():
+    """
+    AI Service의 실제 호출을 대체하는 Mock Fixture입니다.
+    테스트 시 실제 LLM(Ollama)을 호출하지 않고
+    미리 정의된 가짜 응답을 반환하도록 설정
+    """
+    mock = AsyncMock()
+    mock.generate_briefing.return_value = "오늘은 맑은 아침입니다. 예정된 일정은 없습니다."
+    return mock

@@ -2,12 +2,15 @@ import sys
 from loguru import logger
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from app.config import settings
 from app.api.v1 import auth as auth_router
 from app.api.v1 import schedules as schedules_router
 from app.api.v1 import ai as ai_router
 from app.core.limiter import limiter, rate_limit_handler
+from app.core.scheduler import start_scheduler, shutdown_scheduler
+
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
 
@@ -22,11 +25,18 @@ logger.add(
     
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await start_scheduler()
+    yield
+    shutdown_scheduler()
+
 # FastAPI 애플리케이션 인스턴스 생성
 app = FastAPI(
     title="Jeiary API",
     description="일정 관리 서비스, Jeiary의 API 문서입니다.",
     version="1.0.0",
+    lifespan=lifespan
 )
 
 app.state.limiter = limiter

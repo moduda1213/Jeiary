@@ -15,7 +15,7 @@ from tests.conftest import test_user
 async def test_create_schedule(db_session: AsyncSession, test_user: User):
     """ScheduleRepository.create가 일정을 성공적으로 생성하는지 테스트"""
     repo = ScheduleRepository(db_session)
-    schedule_data = ScheduleCreate(title="Test Schedule", date="2025-10-31", start_time=time(10, 30))
+    schedule_data = ScheduleCreate(title="Test Schedule", date="2025-10-31", start_time=time(10, 30), end_time=time(11,30))
 
     created_schedule = await repo.create(schedule_data, user_id=test_user.id)
     
@@ -31,18 +31,19 @@ async def test_get_schedule_by_id_and_user_id(db_session: AsyncSession, test_use
     schedule_data = ScheduleCreate(
         title="Owned Schedule",
         date="2025-11-01",
-        start_time=time(9, 0) # start_time 추가     
+        start_time=time(9, 0), # start_time 추가
+        end_time=time(10, 0)
     )
 
     created_schedule = await repo.create(schedule_data, user_id=test_user.id)
 
     # 올바른 소유자로 조회
-    found_schedule = await repo.get_by_id_and_user_id(created_schedule.id, test_user.id)
+    found_schedule = await repo.get_schedule_by_id_and_user_id(created_schedule.id, test_user.id)
     assert found_schedule is not None
     assert found_schedule.id == created_schedule.id
 
     # 다른 사용자 ID로 조회
-    not_found_schedule = await repo.get_by_id_and_user_id(created_schedule.id, 9999) # 존재하지 않는 user_id
+    not_found_schedule = await repo.get_schedule_by_id_and_user_id(created_schedule.id, 9999) # 존재하지 않는 user_id
     assert not_found_schedule is None
 
 @pytest.mark.asyncio
@@ -52,7 +53,8 @@ async def test_get_schedule_excludes_soft_deleted(db_session: AsyncSession, test
     schedule_data = ScheduleCreate(
         title="To Be Deleted",
         date="2025-11-02",
-        start_time=time(11, 0) # start_time 추가
+        start_time=time(11, 0), # start_time 추가
+        end_time=time(12, 0)
     )
     created_schedule = await repo.create(schedule_data, user_id=test_user.id)
 
@@ -60,31 +62,27 @@ async def test_get_schedule_excludes_soft_deleted(db_session: AsyncSession, test
     await repo.delete(created_schedule)
 
     # 삭제된 일정 조회 시도
-    found_schedule = await repo.get_by_id_and_user_id(created_schedule.id, test_user.id)
+    found_schedule = await repo.get_schedule_by_id_and_user_id(created_schedule.id, test_user.id)
     assert found_schedule is None
 
 @pytest.mark.asyncio
-async def test_get_multi_by_user_id(db_session: AsyncSession, test_user: User):
-    """특정 사용자의 여러 일정을 페이지네이션하여 조회하는지 테스트"""
+async def test_get_schedules_by_user_and_month(db_session: AsyncSession, test_user: User):
+    """특정 사용자의 특정 월 일정을 조회하는지 테스트"""
     repo = ScheduleRepository(db_session)
 
-    # 테스트 사용자 1의 일정 3개 생성
-    await repo.create(ScheduleCreate(title="User1 Schedule 1", date="2025-12-01", start_time=time(9,0)), user_id=test_user.id)
-    await repo.create(ScheduleCreate(title="User1 Schedule 2", date="2025-12-01", start_time=time(10,0)), user_id=test_user.id)
-    await repo.create(ScheduleCreate(title="User1 Schedule 3", date="2025-12-02", start_time=time(9,0)), user_id=test_user.id)
-
-    # 다른 사용자 (ID 9999)의 일정 1개 생성
-    await repo.create(ScheduleCreate(title="User2 Schedule 1", date="2025-12-01", start_time=time(12,0)), user_id=9999)
-
-    # test_user의 일정만 조회
-    user_schedules = await repo.get_multi_by_user_id(user_id=test_user.id)
-    assert len(user_schedules) == 3
-    assert user_schedules[0].title == "User1 Schedule 3" # date.desc(), start_time.desc() 순서 확인
-
-    # 페이지네이션 테스트 (skip=1, limit=1)
-    paginated_schedules = await repo.get_multi_by_user_id(user_id=test_user.id, skip=1, limit=1)
-    assert len(paginated_schedules) == 1
-    assert paginated_schedules[0].title == "User1 Schedule 2"
+    # 2025년 12월 일정 2개 생성
+    await repo.create(ScheduleCreate(title="Dec 1", date="2025-12-01", start_time=time(9,0), end_time=time(10,0)), user_id=test_user.id)
+    await repo.create(ScheduleCreate(title="Dec 2", date="2025-12-15", start_time=time(10,0), end_time=time(11,0)), user_id=test_user.id)
+    
+    # 2025년 11월 일정 1개 생성 (조회되지 않아야 함)
+    await repo.create(ScheduleCreate(title="Nov 1", date="2025-11-01", start_time=time(9,0), end_time=time(10,0)), user_id=test_user.id)
+    
+    # 2025년 12월 조회
+    schedules = await repo.get_schedules_by_user_and_month(test_user.id, year=2025, month=12)
+    
+    assert len(schedules) == 2
+    assert "Dec" in schedules[0].title
+    assert "Dec" in schedules[1].title
 
 @pytest.mark.asyncio
 async def test_update_schedule(db_session: AsyncSession, test_user: User):
@@ -93,7 +91,8 @@ async def test_update_schedule(db_session: AsyncSession, test_user: User):
     schedule_data = ScheduleCreate(
         title="Original Title",
         date="2025-11-03",
-        start_time=time(13, 0) # start_time 추가
+        start_time=time(13, 0), # start_time 추가
+        end_time=time(14, 0),
     )
     created_schedule = await repo.create(schedule_data, user_id=test_user.id)
 
@@ -110,7 +109,8 @@ async def test_delete_schedule(db_session: AsyncSession, test_user: User):
     schedule_data = ScheduleCreate(
         title="Delete Me",
         date="2025-11-04",
-        start_time=time(14, 0) # start_time 추가
+        start_time=time(14, 0), # start_time 추가
+        end_time=time(15,0),
     )
     created_schedule = await repo.create(schedule_data, user_id=test_user.id)
 
