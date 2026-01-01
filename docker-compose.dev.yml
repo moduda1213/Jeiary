@@ -1,0 +1,21 @@
+services:
+  backend:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    environment:
+      - ENV=development
+      - DEBUG=True
+
+  frontend:
+    build:
+      context: ./frontend
+      target: build
+    command: npm run dev -- --host # Vite 실행
+    ports:
+      - "3000:3000"      # [변경] 5173 대신 3000 사용 (충돌 원천 차단)
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true

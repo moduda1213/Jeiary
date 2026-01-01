@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 
 from app.core.scheduler import run_cleanup_job, run_morning_briefing_job
 from app.models.schedule import Schedule

@@ -25,7 +25,7 @@ async def parse_text_with_ai(
     """
     logger.info("========= /parse 진입 ===================")
     try:
-        result = await ai_serivce.parse_schedule_from_text(request.text)
+        result = await ai_serivce.process_chat(user.id, request.text)
         logger.debug(f"Parsing data : {result}")
         if isinstance(result, AIParsedSchedule):
             return AIParseResponse(is_complete=True, data=result, question=None)

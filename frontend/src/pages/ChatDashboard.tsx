@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseTextWithAI } from '@/api/ai';
-import { createSchedule } from '@/api/schedule';
+// import { createSchedule } from '@/api/schedule';
 import { type ChatMessage } from '@/types';
+import ChatInput from '@/components/ChatInput';
+import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 
 const ChatDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -11,10 +13,35 @@ const ChatDashboard: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const {
+    isListening,
+    transcript,
+    startListening,
+    stopListening,
+    hasRecognitionSupport
+   } = useSpeechRecognition();
+
   // 자동 스크롤
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isProcessing]);
+    if (transcript) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      setInputValue(prev => prev ? `${prev} ${transcript}` : transcript);
+    }
+    
+  }, [transcript]);
+
+  // useEffect(() => {
+  //   // 1. 듣기가 끝났고(!isListening)
+  //   // 2. 변환된 텍스트가 있고(transcript)
+  //   // 3. 처리 중이 아닐 때(!isProcessing)
+  //   if (!isListening && transcript && !isProcessing) {
+  //     const timer = setTimeout(() => {
+  //       handleSend();
+  //     }, 800);
+
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [isListening, transcript, isProcessing]);
 
   const handleSend = async () => {
     if (!inputValue.trim() || isProcessing) return;
@@ -37,19 +64,7 @@ const ChatDashboard: React.FC = () => {
       const response = await parseTextWithAI(userText);
       let aiText = '';
       if (response.is_complete && response.data) {
-        // 3. 일정 생성 자동 수행 (또는 사용자 확인 절차 추가 가능)
-        try {
-            await createSchedule({
-                title: response.data.title,
-                date: response.data.date,
-                start_time: response.data.start_time,
-                end_time: response.data.end_time,
-                content: response.data.content
-            });
-            aiText = `일정이 등록되었습니다: "${response.data.title}" (${response.data.date})`;
-        } catch (err) {
-            aiText = "일정 정보를 파싱했지만, 등록 중 오류가 발생했습니다.";
-        }
+          aiText = `일정이 등록되었습니다: "${response.data.title}" (${response.data.date})`;
       } else {
         aiText = response.question || "죄송합니다. 요청을 이해하지 못했습니다.";
       }
@@ -61,6 +76,7 @@ const ChatDashboard: React.FC = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiMsg]);
+
     } catch (error) {
       console.error(error);
       setMessages(prev => [...prev, {
@@ -69,14 +85,9 @@ const ChatDashboard: React.FC = () => {
         text: "시스템 오류가 발생했습니다.",
         timestamp: new Date()
       }]);
+
     } finally {
       setIsProcessing(false);
-    }
-  };
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
     }
   };
 
@@ -112,30 +123,16 @@ const ChatDashboard: React.FC = () => {
         </div>
         {/* 하단 입력창 (고정) */}
         <div className="fixed bottom-0 w-full max-w-[calc(100%-256px)] bg-white p-6 shadow-[0_-2px_4px_rgba(0,0,0,0.02)] dark:bg-[#101922]">
-            <div className="relative mx-auto flex w-full max-w-3xl items-center">
-                <textarea
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="form-input flex h-14 w-full resize-none items-center rounded-xl border border-gray-300 bg-white py-4 pl-4 pr-24 text-base text-gray-900 shadow-sm placeholder:text-gray-50
-       focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                    placeholder="AI에게 메시지를 입력하거나 음성으로 요청하세요."
-                    rows={1}
-                />
-                <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2">
-                    <button className="flex h-9 w-9 items-center justify-center rounded-full text-primary hover:bg-primary/10 transition-colors">
-                        <span className="material-symbols-outlined text-[24px]">mic</span>
-                    </button>
-                    <button
-                        onClick={handleSend}
-                        disabled={!inputValue.trim()}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-sm hover:bg-primary/90 transition-colors disabled:bg-gray-300
-       dark:disabled:bg-gray-700"
-                    >
-                        <span className="material-symbols-outlined text-[24px]">arrow_upward</span>
-                    </button>
-                </div>
-            </div>
+            <ChatInput 
+                value={inputValue}
+                onChange={setInputValue}
+                onSend={handleSend}
+                disabled={!inputValue.trim()} // 빈 상태에서는 isProcessing 체크 불필요
+                isListening={isListening}
+                startListening={startListening}
+                stopListening={stopListening}
+                hasRecognitionSupport={hasRecognitionSupport}
+            />
         </div>
       </div>
     );
@@ -146,14 +143,6 @@ const ChatDashboard: React.FC = () => {
         <div className="mx-auto flex max-w-3xl flex-col gap-6 pb-24">
           {messages.map((msg) => (
             <div key={msg.id} className={`flex items-end gap-3 ${msg.role === 'user' ? 'justify-end ml-auto' : ''} max-w-[80%]`}>
-                {/* 2. AI 아바타 (이미지 적용) */}
-                {/* {msg.role === 'model' && (
-                    <div
-                        className="h-10 w-10 shrink-0 rounded-full bg-cover bg-center"
-                        style={{ backgroundImage:
-       'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBryNAwNMNKlNmlimuTPyvgelwKp75psj7qstrJR40HVVBnMU1nS2ZtCS-kmeJFhRWKeS7SVL2NsIi0ec8Hp0Wp-VhsjJ_2XGHIuWgOvMZb5YRFFtKXASqMBnNIHiG17q5ZHkhmTHa04o8MFe7Z2-8I-P-fHyZmBV_OGLPQr3qH3f17EYxVXcYNa9INTM_OlLXH1daKBl5_NqXRkV_NIHqJVEo_ksgzvFWhBcwDRLelUJ1xpXlG_lQHN2YBPLahQ0kTVaZAZBVQ")' }}
-                    ></div>
-                )} */}
                 <div className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <span className="text-xs text-gray-500">{msg.role === 'user' ? '나' : 'AI 비서'}</span>
                     {/* 4. 말풍선 스타일 */}
@@ -165,15 +154,6 @@ const ChatDashboard: React.FC = () => {
                         <p className="whitespace-pre-wrap">{msg.text}</p>
                     </div>
                 </div>
-                {/* 2. 사용자 아바타 */}
-                {/* {msg.role === 'user' && (
-                    <div
-                        className="h-10 w-10 shrink-0 rounded-full bg-cover bg-center bg-gray-200"
-                        style={user?.avatarUrl ? { backgroundImage: `url("${user.avatarUrl}")` } : {}}
-                    >
-                         {!user?.avatarUrl && <span className="flex h-full w-full items-center justify-center text-xs text-gray-500">ME</span>}
-                    </div>
-                )} */}
             </div>
           ))}
           {/* 로딩 상태 (애니메이션) */}
@@ -196,29 +176,16 @@ const ChatDashboard: React.FC = () => {
       </div>
       {/* 3. 하단 입력창 (채팅 모드) */}
       <div className="w-full border-t border-gray-200 bg-white px-6 py-4 shadow-[0_-2px_4px_rgba(0,0,0,0.02)] dark:border-gray-700 dark:bg-[#101922]">
-        <div className="relative mx-auto flex w-full max-w-3xl items-center">
-            <textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="form-input flex h-14 w-full resize-none items-center rounded-xl border border-gray-300 bg-white py-4 pl-4 pr-24 text-base text-gray-900 shadow-sm placeholder:text-gray-500   
-       focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
-                placeholder="AI에게 메시지를 입력하거나 음성으로 요청하세요."
-                rows={1}
-            />
-            <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2">
-                <button className="flex h-9 w-9 items-center justify-center rounded-full text-primary hover:bg-primary/10 transition-colors">
-                    <span className="material-symbols-outlined text-[24px]">mic</span>
-                </button>
-                <button
-                    onClick={handleSend}
-                    disabled={!inputValue.trim() || isProcessing}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-sm hover:bg-primary/90 transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700" 
-                >
-                    <span className="material-symbols-outlined text-[24px]">arrow_upward</span>
-                </button>
-            </div>
-        </div>
+        <ChatInput 
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={handleSend}
+            disabled={!inputValue.trim()} // 빈 상태에서는 isProcessing 체크 불필요
+            isListening={isListening}
+            startListening={startListening}
+            stopListening={stopListening}
+            hasRecognitionSupport={hasRecognitionSupport}
+        />
       </div>
     </div>
   );

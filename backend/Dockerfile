@@ -21,4 +21,4 @@ EXPOSE 8000
 
 # 7. 컨테이너 실행 시 기본 명령어
 # (개발 환경에서는 docker-compose.yml의 command가 우선 적용됩니다)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120"]

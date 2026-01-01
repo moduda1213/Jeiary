@@ -21,8 +21,4 @@ class UserRepository(BaseRepository[User]):
         hashed_password = get_password_hash(user_create.password)
         user_data= user_create.model_dump(exclude={"password"})
         
-        new_user = self.model(**user_data, password_hash=hashed_password)
-        self.session.add(new_user)
-        await self.session.flush()
-        await self.session.refresh(new_user)
-        return new_user
+        return await super().create(user_data, password_hash=hashed_password)

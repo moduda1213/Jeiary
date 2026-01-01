@@ -4,6 +4,15 @@ import { signup as signupApi } from '@/api/auth';
 import { toast } from "sonner";
 import { InputField } from '@/components/common/InputField';
 
+interface ErrResponse {
+    response?: {
+        status: number,
+        data: {
+            detail: string
+        }
+    }
+}
+
 const SignupPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,6 +42,22 @@ const SignupPage: React.FC = () => {
         return;
     }
 
+    // 1. 숫자 포함 여부 확인
+    if (!/\d/.test(password)) {
+        toast.error('비밀번호에 숫자가 포함되어야 합니다.');
+        return;
+    }
+    // 2. 영문자 포함 여부 확인
+    if (!/[A-Za-z]/.test(password)) {
+        toast.error('비밀번호에 영문자가 포함되어야 합니다.');
+        return;
+    }
+    // 3. 특수문자 포함 여부 확인
+    if (!/[!@#$%^&*]/.test(password)) {
+        toast.error('비밀번호에 특수문자가 포함되어야 합니다.');
+        return;
+    }
+
     setLoading(true);
 
     try {
@@ -40,9 +65,10 @@ const SignupPage: React.FC = () => {
       toast.success('회원가입 성공! 로그인해주세요.');
       navigate('/login');
 
-    } catch (err) {
-      console.error(err);
-      toast.error('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } catch (error: unknown) {
+      console.error(error);
+      const err = error as ErrResponse;
+      toast.error(err.response?.data.detail);
       
     } finally {
       setLoading(false);

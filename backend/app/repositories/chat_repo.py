@@ -10,15 +10,11 @@ class ChatRepository(BaseRepository[ChatHistory]): # 제네릭 상속
     
     async def create(self, user_id: int, role: ChatRole, content: str) -> ChatHistory:
         """채팅 내역 저장"""
-        chat = ChatHistory(
+        return await super().create(
             user_id = user_id,
             role = role.value,
             content = content
         )
-        self.session.add(chat)
-        await self.session.flush()
-        await self.session.refresh(chat)
-        return chat
     
     async def get_recent_chats(self, user_id: int, limit: int = 20) -> list[ChatHistory]:
         """
@@ -38,11 +34,7 @@ class ChatRepository(BaseRepository[ChatHistory]): # 제네릭 상속
     
     async def delete(self, chat: ChatHistory) -> ChatHistory:
         """소프트 삭제"""
-        chat.is_deleted = True
-        self.session.add(chat)
-        await self.session.flush()
-        await self.session.refresh(chat)
-        return chat
+        return await self.soft_delete(chat)
     
     async def delete_expired_chat(self, cutoff_date: datetime) -> int:
         """

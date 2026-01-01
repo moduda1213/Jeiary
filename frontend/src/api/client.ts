@@ -14,15 +14,11 @@ let isRefreshing = false;
 let refreshFailed = false;
 
 // 진행 중인 토큰 갱신 후 실행되어야 할 콜백 함수들의 배열
-let failedQueue: ((token: string) => void)[] = [];
+let failedQueue: ((error: Error | null) => void)[] = [];
 
-const processQueue = (error: Error | null, token: string | null = null) => {
+const processQueue = (error: Error | null) => {
     failedQueue.forEach(prom => {
-        if (error) {
-            prom(error as any);
-        } else {
-            prom(token as string);
-        }
+        prom(error as any);
     });
     failedQueue = [];
 };
@@ -36,21 +32,26 @@ apiClient.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
+        // 갱신 요청 자체가 실패한 경우 무한 루프 방지
         if (originalRequest.url?.includes('/auth/refresh')) {
             return Promise.reject(error);
         }
-        // 1. 401 에러가 아니거나, 이미 갱신에 최종 실패한 경우, 더 이상 처리하지 않음 ( 무한 루프 방지 )
+
+        // 1. 401 에러가 아니거나, 이미 갱신에 최종 실패한 경우, 더 이상 처리하지 않음
         if (error.response?.status !== 401 || refreshFailed) {
             return Promise.reject(error);
         }
 
-        // 2. 토큰 갱신 로직이 이미 실행 중인 경우
+        // 2. 토큰 갱신 로직이 이미 실행 중인 경우 (대기열 추가)
         if (isRefreshing) {
-            // 이 요청은 '대기열'에 추가하고, 토큰 갱신이 완료되면 재실행
-            return new Promise((resolve) => {
-                failedQueue.push((token) => {
-                    originalRequest.headers['Authorization'] = 'Bearer ' + token;
-                    resolve(apiClient(originalRequest));
+            return new Promise((resolve, reject) => {
+                failedQueue.push((error) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        // 헤더 설정 없이 재설정 (쿠키 사용)
+                        resolve(apiClient(originalRequest));
+                    }
                 });
             });
         }
@@ -61,14 +62,13 @@ apiClient.interceptors.response.use(
 
         try {
             // 4. 토큰 갱신 요청
-            const { data } = await apiClient.post('/auth/refresh');
-            const newAccessToken = data.access_token; // 백엔드가 새 토큰을 반환한다고 가정
+            await apiClient.post('/auth/refresh');
 
             // 갱신 성공
             isRefreshing = false;
 
             // 대기열에 있던 모든 요청들을 새로운 토큰으로 재실행
-            processQueue(null, newAccessToken);
+            processQueue(null);
 
             // 5. 원래 실패했던 요청을 새로운 토큰으로 재시도
             return apiClient(originalRequest);
@@ -79,7 +79,7 @@ apiClient.interceptors.response.use(
             refreshFailed = true; // 갱신이 최종 실패했음을 기록
 
             // 대기열에 있던 요청들을 에러와 함께 모두 실패 처리
-            processQueue(refreshError as Error, null);
+            processQueue(refreshError as Error);
 
             // 7. [핵심] 'auth:logout' 커스텀 이벤트를 발생시켜 React 영역에 알림
             console.error("Refresh token failed. Dispatching auth:logout event.");

@@ -15,7 +15,7 @@ export interface AIParseResponse{
 }
 
 /**
- * AI 파싱 엔드포인트에 텍스트를 전송학 응답을 받습니다.
+ * AI 파싱 엔드포인트에 텍스트를 전송한 응답을 받습니다.
  * @param text 파싱할 자연어 텍스트
  * @returns AI 파싱 결과
  */

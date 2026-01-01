@@ -21,7 +21,7 @@ export const login = async (email: string, password: string): Promise<void> => {
  * Content-Type: application/json
  */
 export const signup = async (email: string, password: string): Promise<User> => {
-    const response = await apiClient.post<User>('/auth/signup', {
+    const response = await apiClient.post<User>('/auth/register', {
         email,
         password
     });

@@ -22,7 +22,6 @@ logger.add(
     sys.stderr,
     level = log_level, # INFO 레벨 이상의 로그를 출력하도록 설정
     format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
-    
 )
 
 @asynccontextmanager
@@ -54,8 +53,8 @@ if settings.CORS_ORIGINS:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-    )
-
+    ) 
+ 
 app.include_router(auth_router.router, prefix="/api/v1")
 app.include_router(schedules_router.router, prefix="/api/v1")
 app.include_router(ai_router.router, prefix="/api/v1")

@@ -1,0 +1,4 @@
+jeiary_server  | 2025-12-30 13:52:27 | DEBUG    | app.services.ai_service:process_chat:98 - tool_calls: [{'name': 'UpdateScheduleTool', 'args': {'date': '2025-12-31', 'end_time': '15:00', 'schedule_id': "ID를 모를 경우, 일정을 찾기 위한 검색어 (예: '점심', '회의')", 'search_keyword': '팀 회의', 'start_time': '14:00', 'title': '팀팀회의'}, 'id': 'c4675321-6d6b-490c-bbd4-1bdc06c30a7e', 'type': 'tool_call'}]
+Tool Call Detected: UpdateScheduleTool |
+ Args: {'date': '2025-12-31', 'end_time': '15:00', 'schedule_id': "ID를 모 를 경우, 일정을 찾기 위한 검색어 (예: '점심', '회의')", 'search_keyword': '팀 회의', 'start_time': '14:00', 'title': '팀팀회의'}                                                                                
+jeiary_server  | 2025-12-30 13:52:27 | DEBUG    | app.services.ai_service:process_chat:107 - type(args): <class 'dict'>

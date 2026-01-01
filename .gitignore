@@ -8,7 +8,12 @@ htmlcov/
 
 # Logs
 logs/
-*.log
+#*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # IDE / Editor
 .idea/
@@ -34,7 +39,6 @@ build/
 
 Docker 데이터베이스 연결
 gemini.md
-log.txt
 memo.txt
 feedback.md
 workflow/
@@ -46,15 +50,6 @@ develop-대화내역.md
 #############################
 ####### frontend ############
 #############################
-
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
 node_modules
 dist

@@ -34,6 +34,7 @@ const LoginPage: React.FC = () => {
             toast.success("로그인되었습니다."); // 성공 알림
             //navigate('/'); // 홈으로 이동
         } catch (err) {
+            console.log(err);
             toast.error("로그인 실패: 이메일과 비밀번호를 확인해주세요."); // 실패 알림
         } finally {
             setLoading(false);

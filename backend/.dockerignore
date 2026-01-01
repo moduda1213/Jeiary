@@ -1,0 +1,30 @@
+# 1. 버전 관리 및 IDE 설정 제외
+.git
+.gitignore
+.vscode
+.idea
+
+# 2. 파이썬 캐시 및 가상환경 제외 (중요: 이미지 크기 감소)
+__pycache__
+*.py[cod]
+*$py.class
+.venv
+venv
+env
+
+# 3. 환경 변수 파일 제외 (보안: 이미지 안에 비밀번호 포함 방지)
+# 컨테이너 실행 시 docker-compose.yml에서 주입하므로 이미지에는 없어야 함
+.env
+.env.*
+
+# 4. 테스트 코드 및 결과 제외 (운영 이미지에는 불필요)
+tests/
+.pytest_cache
+.coverage
+htmlcov/
+
+# 5. 로그 및 임시 파일 제외
+logs/
+*.log
+temp.py
+test.py

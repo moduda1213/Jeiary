@@ -1,6 +1,5 @@
 # API 엔드포인트에서는 구현된 Service 로직을 의존성으로 주입받아 사용
 # 이를 위한 설정 파일
-from loguru import logger
 from typing import Annotated
 
 from fastapi import Depends, Request
@@ -88,8 +87,10 @@ CurrentUserDep = Annotated[User, Depends(get_current_user)]
 # AI Service 의존성 주입 함수
 def get_ai_service(
     chat_repo: ChatRepoDep,
+    user_repo: UserRepoDep,
+    schedule_service: ScheuduleServiceDep
 ) -> AIService:
     """AIService 인스턴스를 제공합니다."""
-    return AIService(chat_repo=chat_repo)
+    return AIService(chat_repo=chat_repo, user_repo=user_repo, schedule_service=schedule_service )
 
 AIServiceDep = Annotated[AIService, Depends(get_ai_service)]

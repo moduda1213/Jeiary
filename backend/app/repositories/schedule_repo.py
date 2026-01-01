@@ -12,14 +12,11 @@ class ScheduleRepository(BaseRepository[Schedule]):
         
     async def create(self, schedule_data: ScheduleCreate, user_id: int) -> Schedule:
         """새로운 일정을 생성하고 DB에 추가합니다."""
-        schedule = Schedule(
-            **schedule_data.model_dump(),
-            user_id=user_id
-        )
-        self.session.add(schedule)
-        await self.session.flush()
-        await self.session.refresh(schedule)
-        return schedule
+        return await super().create(schedule_data, user_id = user_id)
+    
+    async def delete(self, schedule: Schedule) -> Schedule:
+        """특정 일정을 소프트 삭제 처리합니다."""
+        return await self.soft_delete(schedule)
     
     async def get_schedule_by_id_and_user_id(self, schedule_id: int, user_id: int) -> Schedule | None:
         """ID와 사용자 ID로 특정 일정을 조회합니다."""
@@ -67,14 +64,6 @@ class ScheduleRepository(BaseRepository[Schedule]):
         for key, value in update_dict.items():
             setattr(schedule, key, value)
             
-        self.session.add(schedule)
-        await self.session.flush()
-        await self.session.refresh(schedule)
-        return schedule
-    
-    async def delete(self, schedule: Schedule) -> Schedule:
-        """특정 일정을 소프트 삭제 처리합니다."""
-        schedule.soft_delete()
         self.session.add(schedule)
         await self.session.flush()
         await self.session.refresh(schedule)

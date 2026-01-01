@@ -9,11 +9,11 @@ class RefreshTokenRepository(BaseRepository[RefreshToken]):
         super().__init__(RefreshToken, session)
         
     async def create(self, user_id: int, jti: str, expires_at: datetime) -> RefreshToken:
-        token = RefreshToken(user_id=user_id, token_id=jti, expires_at=expires_at)
-        self.session.add(token)
-        await self.session.flush()
-        await self.session.refresh(token)
-        return token
+        return await super().create(
+            user_id=user_id, 
+            token_id=jti, 
+            expires_at=expires_at
+        )
     
     async def get_by_jti(self, jti: str) -> RefreshToken | None:
         result = await self.session.execute(select(self.model).filter(self.model.token_id == jti))
